@@ -35,7 +35,7 @@
           this.super();
           this.menuStructure = this.shadowRoot.querySelector("content");
         },
-        buildMenuHTML: function(menu) {
+        buildMenuHTML: function() {
           var menu = this.shadowRoot.querySelector(".color-ui");
           var record = allChannels.length === 0;
           channels.forEach(function(channel) {
