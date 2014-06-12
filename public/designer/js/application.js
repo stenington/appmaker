@@ -48,7 +48,7 @@ define(["jquery", "l10n", "reporter"], function($, l10n, reporter) {
         var op = alreadySaved ? this.updateApp : this.saveApp;
         op(name, appid, html, function callAPIPublish(err) {
           if(err) {
-            errorReport("publish failed in save step!", err);
+            reporter.errorReport("publish failed in save step!", err);
             if(next) { next(err); }
             return;
           }
@@ -147,10 +147,7 @@ define(["jquery", "l10n", "reporter"], function($, l10n, reporter) {
         var self = this;
         var userState = document.querySelector('user-state');
 
-        // try to route through appmaker proxy server if protocols don't match
-        if (window.location.protocol === 'https:' && url.indexOf('https') !== 0) {
-          url = '/api/remix-proxy?url=' + encodeURIComponent(encodeURIComponent(url));
-        }
+        url = '/api/remix-proxy?url=' + encodeURIComponent(encodeURIComponent(url));
 
         function findUserComponentLinkTags (data) {
           var match;

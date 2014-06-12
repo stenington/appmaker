@@ -17,12 +17,12 @@ http = require('http'),
 i18n = require('webmaker-i18n'),
 lessMiddleware = require('less-middleware'),
 localeBuild = require('./lib/localeBuild'),
-localComponents = [],
 middleware = require('./lib/middleware'),
 path = require('path'),
 postmark = require("postmark")(process.env.POSTMARK_API_KEY),
 uuid = require('node-uuid'),
 version = require('./package').version,
+emulate_s3 = process.env.S3_EMULATION || !process.env.S3_KEY,
 WebmakerAuth = require('webmaker-auth');
 
 try {
@@ -41,14 +41,11 @@ catch(e) {
 }
 
 var urls = require('./lib/urls');
-var localStore = require('./lib/local-store');
 var s3Store = require('./lib/s3-store');
 var makeAPIPublisher = require('./lib/makeapi-publisher').create(process.env.MAKEAPI_URL, process.env.MAKEAPI_ID, process.env.MAKEAPI_SECRET);
 
 // Cache fonts for 180 days.
 var MAX_FONT_AGE_MS = 1000 * 60 * 60 * 24 * 180;
-
-var LOCAL_STORE_BASE_PATH = __dirname + '/' + 'store';
 
 var webmakerAuth = new WebmakerAuth({
   loginURL: process.env.LOGINAPI,
@@ -159,25 +156,9 @@ require("express-persona")(app, {
 });
 
 var store;
-var useSubdomains = false;
+store = s3Store.init(process.env.S3_KEY, process.env.S3_SECRET, process.env.S3_BUCKET, process.env.S3_DOMAIN, emulate_s3);
 
-if (process.env.STORE === 's3') {
-  if (!process.env.S3_KEY || process.env.S3_KEY === '') {
-    console.warn('No S3 credentials. Reverting to local store.');
-    store = localStore.init(LOCAL_STORE_BASE_PATH);
-    app.use('/store', express.static(path.join(__dirname, 'store')));
-  }
-  else {
-    store = s3Store.init(process.env.S3_KEY, process.env.S3_SECRET, process.env.S3_BUCKET);
-    useSubdomains = true;
-  }
-}
-else {
-  store = localStore.init(LOCAL_STORE_BASE_PATH);
-  app.use('/store', express.static(path.join(__dirname, 'store')));
-}
-
-var urlManager = new urls.URLManager(process.env.PUBLISH_HOST_PREFIX, process.env.PUBLISH_HOST, process.env.S3_OBJECT_PREFIX, useSubdomains);
+var urlManager = new urls.URLManager(process.env.PUBLISH_HOST_PREFIX, process.env.PUBLISH_HOST, process.env.S3_OBJECT_PREFIX, !emulate_s3);
 routes = require('./routes')(
   store,
   __dirname + '/views',
@@ -263,6 +244,28 @@ app.get('/healthcheck', function( req, res ) {
 
 app.get('/api/remix-proxy', routes.proxy.remix);
 
+if (process.env.MAKEAPI_URL) {
+  var makeapiSearch = new require('makeapi-client')({
+    apiURL: process.env.MAKEAPI_URL
+  });
+
+  app.get('/apps/:user', function (req, res) {
+    makeapiSearch
+      .contentType('Appmaker')
+      .user(req.params.user)
+      .limit(50)
+      .then(function(err, makes) {
+        if (err) {
+          res.json({error: err, makes: makes}, 500);
+        }
+        else {
+          res.json({error: null, makes: makes}, 200);
+        }
+      });
+
+  });
+}
+
 module.exports = app;
 
 if (!module.parent) {
@@ -284,3 +287,8 @@ if (!module.parent) {
   });
 }
 
+// If we're in running in emulated S3 mode, run a mini
+// server for serving up the "s3" published content.
+if (emulate_s3) {
+  require( "mox-server" ).runServer( process.env.MOX_PORT || 12319 );
+}

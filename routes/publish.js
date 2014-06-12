@@ -57,11 +57,12 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
 
         var folderName = moniker.choose() + '-' + Math.round(Math.random() * 1000);
         var userName = req.session.user.username;
-        var installHTMLFilename =  'install.html';
-        var appHTMLFilename = 'index.html';
+        var installHTMLFilename =  'install';
+        var appHTMLFilename = 'app';
         var manifestFilename = 'manifest.webapp';
 
         var remoteURLPrefix = urlManager.createURLPrefix(folderName);
+        var launchPath = urlManager.createLaunchPath(folderName);
 
         var remoteURLs = {
           install: remoteURLPrefix + installHTMLFilename,
@@ -112,16 +113,24 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
           var manifestJSON = {
             "name": 'My App - ' + folderName,
             "description": 'My App - ' + folderName,
-            "launch_path": '/index.html',
+            "launch_path": launchPath,
             "developer": {
-              "name": "Flathead",
+              "name": "App Maker",
               "url": "https://appmaker.mozillalabs.com/"
             },
             "icons": {
               "60": "/style/icons/icon-60.png",
               "79": "/style/icons/icon-79.png"
             },
-            "default_locale": "en"
+            "default_locale": "en",
+            "permissions": {
+              "audio-capture": {
+                "description": "We'd like to use your microphone"
+              },
+              "video-capture": {
+                "description": "We'd like to use your camera"
+              }
+            }
           };
 
           var outputFiles = [
@@ -138,6 +147,7 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
           var filesDone = 0;
 
           outputFiles.forEach(function (description) {
+
             store.write(description.filename, description.data, function (result) {
               if (200 !== result.statusCode) {
                 console.error('Trouble writing ' + description.filename + ' to S3 (' + result.statusCode + ').');
@@ -154,8 +164,8 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
                   remix: remoteURLs.app,
                   thumbnail: 'http://appmaker.mozillalabs.com/images/mail-man.png',
                   tags: ['appmaker'],
-                  description: 'Appmaker ' + folderName,
-                  title: 'Appmaker ' + folderName,
+                  description: 'Appmaker ' + appName,
+                  title: appName,
                   email: req.session.email,
                   author: userName,
                   locale: req.localeInfo.lang
