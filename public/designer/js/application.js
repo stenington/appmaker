@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-define(["jquery", "l10n", "reporter"], function($, l10n, reporter) {
+define(["jquery", "l10n", "reporter","designer/editable"], function($, l10n, reporter, Editable) {
 
     return {
       getCurrentApp: function(){
@@ -16,6 +16,7 @@ define(["jquery", "l10n", "reporter"], function($, l10n, reporter) {
       },
       clearCurrentApp: function(){
         localStorage.removeItem("currentApp");
+        Editable.removeAttributes();
       },
       newApp: function(){
         var app = document.querySelector("ceci-app");
@@ -43,7 +44,15 @@ define(["jquery", "l10n", "reporter"], function($, l10n, reporter) {
           }
         });
       },
-      publishApp: function(name, appid, html, alreadySaved, afterPublish) {
+      publishApp: function(options) {
+        var name = options.name,
+            appDescription = options.appDescription,
+            appTags = options.appTags,
+            appid = options.appid,
+            html = options.html,
+            alreadySaved = options.alreadySaved,
+            afterPublish = options.afterPublish;
+
         // make sure to save first; If that succeeds, perform a publish
         var op = alreadySaved ? this.updateApp : this.saveApp;
         op(name, appid, html, function callAPIPublish(err) {
@@ -55,7 +64,9 @@ define(["jquery", "l10n", "reporter"], function($, l10n, reporter) {
           $.ajax('/api/publish', {
             data: {
               name: name,
-              html: html
+              html: html,
+              appDescription: appDescription,
+              appTags: appTags
             },
             type: 'post',
             success: function (data) {

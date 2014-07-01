@@ -1,6 +1,7 @@
 # Appmaker
 
-[![Build Status](https://travis-ci.org/mozilla-appmaker/appmaker.svg?branch=develop)](https://travis-ci.org/mozilla-appmaker/appmaker) [![Dependency Status](https://david-dm.org/mozilla-appmaker/appmaker.svg)](https://david-dm.org/mozilla-appmaker/appmaker) [![devDependency Status](https://david-dm.org/mozilla-appmaker/appmaker/dev-status.svg)](https://david-dm.org/mozilla-appmaker/appmaker#info=devDependencies)
+[![Build Status](https://travis-ci.org/mozilla-appmaker/appmaker.svg?branch=develop)](https://travis-ci.org/mozilla-appmaker/appmaker) 
+[![devDependency Status](https://david-dm.org/mozilla-appmaker/appmaker/dev-status.svg)](https://david-dm.org/mozilla-appmaker/appmaker#info=devDependencies)
 
 Welcome to Appmaker (beta).
 
@@ -96,6 +97,8 @@ LOAD_FROM_GITHUB: if omitted, or "false", instructs appmaker to load components 
 HSTS_DISABLED: if set to "true", [HSTS](http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security) is disabled.  **(If you are not forcing SSL, you should turn disable HSTS by setting HSTS_DISABLED='true' in the .env)**
 DISABLE_XFO_HEADERS_DENY: If set to "true", [X-Frame-Options Headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/X-Frame-Options) are not set.  If not set to "true" / left unset, XFO headers are set to DENY.
 IEXSS_PROTECTION_DISABLED: If set to "true", iexss vulnerability headers are not set.  If set to false or left unset, iexss protection for IE8 will be enabled.
+GA_ACCOUNT: Optional google analytics account setting. (https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setAccount)
+GA_DOMAIN: Optional google analytics domain setting. (https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiDomainDirectory#_gat.GA_Tracker_._setDomainName)
 
 
 ```
@@ -139,7 +142,13 @@ Foreman explanation: http://blog.daviddollar.org/2011/05/06/introducing-foreman.
 * Join our weekly call
 
 ## Component Development
-Required reading:
+
+So you want to make a component? That's great, we want to work with you! <a href="https://github.com/mozilla-appmaker/appmaker/wiki/Contributing-a-component">Here's a guide</a> where you can learn what components are, how they are built, how to make your own and finally how to submit your finished component to Appmaker.
+
+<a href="https://github.com/mozilla-appmaker/appmaker/wiki/Contributing-a-component">Guide to Contributing a Component</a>
+
+
+Technical reading:
 https://github.com/mozilla-appmaker/appmaker/blob/develop/public/ceci/README.md
 
 Ceci is a set of foundational elements used in a AppMaker app, implemented as a set of [Polymer](http://polymer-project.org/) components.

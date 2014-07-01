@@ -1,4 +1,4 @@
-<polymer-element name="ceci-app" attributes="name appid" name="New App">
+<polymer-element name="ceci-app" attributes="name appid appdescription apptags">
   <template>
 
     <style>
@@ -66,6 +66,14 @@
         window.dispatchEvent(new CustomEvent("CeciAppReady"));
       },
       attached: function() {
+        var loadingPane = document.querySelector(".loading-pane");
+        function onPolymerReady() {
+          loadingPane.classList.add("fade");
+          window.removeEventListener('polymer-ready', onPolymerReady);
+        }
+        if (loadingPane) {
+          window.addEventListener('polymer-ready', onPolymerReady);
+        }
         this.async( function() {
           window.dispatchEvent(new CustomEvent("CeciAppAttached"));
         });

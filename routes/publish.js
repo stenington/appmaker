@@ -13,6 +13,7 @@ var dbModels = require('../lib/db-models');
 
 module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbconn) {
   var Component = dbModels.get('Component');
+  var App = dbModels.get('App');
 
   var templates = {
     publish: null,
@@ -81,24 +82,24 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
           return str;
         }
 
-        var requestHTML = inputData.html;
-        var appName = inputData.name;
-
         // core appmaker components
         var coreComponents = app.locals.components;
         var appComponents = [
           //... mine the requestHTML for these? ...
         ];
 
+        var remixUrl = encodeURIComponent(encodeURIComponent(remoteURLs.app));
         getUserComponents(req, function (userComponents) {
 
+          var appDescription = inputData.appDescription || "";
+          var appName = inputData.name || req.gettext('My App') + ' - ' + folderName;
           var appStr = templates.publish({
-            appHTML: requestHTML,
+            appHTML: inputData.html,
             folderName: folderName,
             appName: appName,
             gettext: req.gettext,
             ceciComponentURL: process.env.ASSET_HOST,
-            remixURL: encodeURIComponent(encodeURIComponent(remoteURLs.app)),
+            remixURL: remixUrl,
             bundles: app.locals.bundles,
             components: coreComponents.concat(appComponents),
             userComponents: userComponents
@@ -107,12 +108,16 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
           var installStr = templates.install({
             iframeSrc: remoteURLs.app,
             manifestUrl: remoteURLs.manifest,
-            gettext: req.gettext
+            gettext: req.gettext,
+            appname: appName,
+            username: userName,
+            description: appDescription,
+            webmakerurl: process.env.WEBMAKER_URL || ""
           });
 
           var manifestJSON = {
-            "name": 'My App - ' + folderName,
-            "description": 'My App - ' + folderName,
+            "name": appName,
+            "description": appDescription,
             "launch_path": launchPath,
             "developer": {
               "name": "App Maker",
@@ -146,6 +151,22 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
 
           var filesDone = 0;
 
+          var setObj = {
+            'published-date': new Date()
+          };
+
+          App.update({
+              author: req.session.email,
+              name: inputData.name
+            }, {
+              $set: setObj
+            }, {},
+            function(err,obj){
+              if(err){
+                console.error('Error saving published date to database: ' + err);
+              }
+            }
+          );
           outputFiles.forEach(function (description) {
 
             store.write(description.filename, description.data, function (result) {
@@ -161,11 +182,11 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
                 // Don't wait for the MakeAPI to deliver url to user
                 makeAPIPublisher.publish({
                   url: remoteURLs.install,
-                  remix: remoteURLs.app,
+                  remix: remixUrl,
                   thumbnail: 'http://appmaker.mozillalabs.com/images/mail-man.png',
-                  tags: ['appmaker'],
-                  description: 'Appmaker ' + appName,
                   title: appName,
+                  appDescription: appDescription,
+                  appTags: inputData.appTags || "",
                   email: req.session.email,
                   author: userName,
                   locale: req.localeInfo.lang

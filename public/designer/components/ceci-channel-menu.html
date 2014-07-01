@@ -76,9 +76,14 @@
   <script>
     require(['l10n'], function(L10n) {
       Polymer('ceci-channel-menu', {
+        menubuilt : false,
         ready: function() {
           this.super();
           this.menuStructure = this.shadowRoot.querySelector("content");
+          this.addEventListener("click", function(e) {
+            window.dispatchEvent(new CustomEvent("SelectElement", { detail :  this.component }));
+            e.stopPropagation();
+          });
         },
         attached: function () {
           var that = this;
@@ -91,10 +96,16 @@
             that.hideMenu();
           });
 
+          window.addEventListener("designerClick",function(e){
+            that.hideMenu();
+          });
+
           this.async(function () {
             this.component = this.parentNode;
-            this.buildMenu(this.component);
-            this.adjustMenuPosition();
+            if(!this.menubuilt){
+              this.buildMenu(this.component);
+              this.adjustMenuPosition();
+            }
           });
 
         },
@@ -102,9 +113,12 @@
           this.menuWrapper.classList.toggle("open");
           if(this.menuWrapper.classList.contains("open")){
             window.dispatchEvent(new CustomEvent('menuOpen'));
+            this.menu.classList.remove("picking-colors");
             this.menuWrapper.classList.add("open");
             this.addhelperClasses();
             this.adjustMenuPosition();
+          } else {
+            window.dispatchEvent(new CustomEvent('menuClosed'));
           }
         },
         showMenu : function() {
@@ -131,6 +145,8 @@
           for(var j = 0; j < labels.length; j++){
             labels[j].style.display = "block";
           }
+          window.dispatchEvent(new CustomEvent('menuClosed'));
+
         },
         adjustMenuPosition : function(){
           this.menu = this.shadowRoot.querySelector(".channel-menu");
@@ -193,6 +209,7 @@
           this.dispatchEvent(new CustomEvent('channelUpdated', {name: name, bubbles: true, detail: this}));
         },
         buildMenu: function() {
+          this.menubuilt = true;
           var that = this;
           var communicators, handlertype;
 
@@ -209,6 +226,7 @@
           function colorListClickHandler(handlerType){
             return function(event) {
               if(event.target.classList.contains("color")){
+                that.menu.classList.remove("picking-colors");
                 var channelOption = event.target.parentNode.parentNode.parentNode;
                 var color = event.target.getAttribute("data-channel");
                 var handler = this.parentNode.getAttribute(handlerType);
@@ -232,6 +250,8 @@
           function showColorUI(){
             //Hides the label for the current option
             this.style.display = "none";
+
+            that.menu.classList.add("picking-colors");
 
             //Hide all the options
             var options = that.menu.querySelectorAll(".channel-option");
