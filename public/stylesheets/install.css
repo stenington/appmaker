@@ -20,6 +20,7 @@ h1 {
 
 .app-details {
   text-align: center;
+  margin: 0;
 }
 
 .app-title {
@@ -37,46 +38,38 @@ a {
   text-decoration: none;
 }
 
-.install-spinner {
-  background-image: url(../images/icon_gear.png);
-  height: 24px;
-  width: 24px;
-  background-size: 16px auto;
-  background-position: center center;
-  background-repeat: no-repeat;
+.hidden {
   display: none;
-  vertical-align: middle;
-  margin-left: 4px;
 }
 
-.install-spinner.spinning {
-  display: inline-block;
-  -moz-animation: linear 2s gearspin;
-  -moz-animation-iteration-count: infinite;
+input {
+  border: 3px solid #0f1113;
+  outline: none;
+  text-indent: 10px;
+  box-sizing: border-box;
+  -moz-box-sizing:border-box; /* Firefox */
+  margin-top: 10px;
+  border: 3px solid #0F1113;
+  outline: medium none;
 }
 
-@-moz-keyframes gearspin {
-  0% { -moz-transform: rotate(0deg)}
-  100% { -moz-transform: rotate(360deg)}
-}
-
-@-webkit-keyframes gearspin {
-  0%    { -webkit-transform: rotate(0deg)}
-  100%  { -webkit-transform: rotate(360deg)}
-}
-
+input,
 button {
   font-family: 'Source Sans Pro', arial;
   width: 100%;
   -webkit-appearance: none;
-  border: none;
-  height: 80px;
+  -moz-appearance: none;
+  height: 50px;
+  font-size: 18px;
+}
+
+button {
+  margin-top: 6px;
+  cursor: pointer;
   border-radius: 3px;
-  font-size: 24px;
   background-color: #358CCE;
   color: #FFF;
-  margin: 20px 0px;
-  cursor: pointer;
+  border: none;
 }
 
 button:hover {

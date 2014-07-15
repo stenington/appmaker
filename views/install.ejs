@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600">
   <link rel="stylesheet" href="<%= process.env.ASSET_HOST %>/stylesheets/install.css" />
+  <link rel="stylesheet" href="<%= process.env.ASSET_HOST %>/stylesheets/install-spinner.css" />
   <script src="<%= process.env.ASSET_HOST %>/vendor/qrcodejs/qrcode.js"></script>
   <title>My Appmaker App</title>
   <% if (process.env.GA_ACCOUNT){ %>
@@ -26,7 +27,7 @@
 </head>
 <body>
   <script type="template/html">
-    <img src="<%= process.env.ASSET_HOST %>/images/chef-man.png">
+    <img src="<%= process.env.ASSET_HOST %>/images/app-icon.png">
     <h1><%- gettext("You'll need Firefox for this App") %></h1>
     <p>
       <%- gettext("In order to install this app") %>
@@ -46,6 +47,12 @@
     <button class="run-in-browser">
       <span><%- gettext('Run in Browser') %></span>
     </button>
+    <input type="email" class="mail-me-input" placeholder="Your Email">
+    <button class="mail-me-button">
+      <span><%- gettext('Mail me my app URL') %></span>
+    </button>
+    <p class="email-success hidden"><%- gettext("We have mailed you your app URL!") %></p>
+    <p class="email-fail hidden"><%- gettext("There was a problem mailing you your app URL. Please try again.") %></p>
   </div>
   <p><%- gettext("QR code install explanation") %></p>
   <div id="qrcode"></div>
@@ -87,7 +94,52 @@
         a.href = appUrl;
       }
       new QRCode(document.querySelector("#qrcode"), '<%- iframeSrc %>');
-    }, false);
+
+      var emailButton = document.querySelector('.mail-me-button');
+      var emailInput = document.querySelector('.mail-me-input');
+      var emailSuccess = document.querySelector(".email-success");
+      var emailError = document.querySelector(".email-fail");
+
+      function disableEmail(disable) {
+        emailButton.disabled = disable;
+        emailInput.disabled = disable;
+      }
+
+      function onError(e) {
+        console.error(e);
+        disableEmail(false);
+        emailError.classList.remove("hidden");
+      }
+
+      emailInput.addEventListener("input", function() {
+        emailSuccess.classList.add("hidden");
+        emailError.classList.add("hidden");
+      });
+
+      emailButton.addEventListener("click", function (e) {
+        var address = emailInput.value.trim();
+        if (!address) {
+          return;
+        }
+        disableEmail(true);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%= process.env.ASSET_HOST %>/notify?appURL=' + encodeURIComponent(window.location.href) + '&email=' + address, true);
+        xhr.addEventListener("error", onError);
+        xhr.addEventListener("readystatechange", function (e) {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              disableEmail(false);
+              emailSuccess.classList.remove("hidden");
+            }
+            else {
+              onError(e);
+            }
+          }
+        });
+        xhr.send(null);
+      });
+    });
   </script>
 </body>
 </html>

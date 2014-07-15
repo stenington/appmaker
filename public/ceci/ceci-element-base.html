@@ -11,6 +11,17 @@
 
     var DEFAULT_CHANNEL = 'blue';
 
+    // Mouse/touch events that need to be routed properly
+    var customListenerMap = {
+      'on-ceci-pressdown': { eventName: 'ceci-pressdown', mobile: 'touchstart', desktop: 'mousedown' },
+      'on-ceci-pressup': { eventName: 'ceci-pressup', mobile: 'touchend', desktop: 'mouseup' }
+    };
+
+    // Create a query selector based on the map above, like '[on-ceci-pressdown],[on-ceci-pressup]'.
+    var customListenerQuerySelector = Object.keys(customListenerMap).map(function (m) {
+      return '[' + m + ']';
+    }).join(',');
+
     function processDefinition (element) {
       var definitionJSON = window.CeciDefinitions[element.localName];
 
@@ -86,7 +97,7 @@
           if (listenerDefinition['default'] !== true) {
             channel = listenerDefinition['default'];
           }
-          defaultListeners.push({name: listenerName, channel: channel });
+          defaultListeners.push({name: listenerName, channel: "a" });
         }
       });
 
@@ -106,7 +117,7 @@
           if (broadcastDefinition['default'] !== true) {
             channel = broadcastDefinition['default'];
           }
-          defaultBroadcasts.push({name: broadcastName, channel: channel });
+          defaultBroadcasts.push({name: broadcastName, channel: "a" });
         }
       });
 
@@ -125,14 +136,14 @@
           attributes: {}
         };
 
-        var ceciDefinition = processDefinition(this);
+        this.ceciDefinition = processDefinition(this);
 
-        if (!ceciDefinition) {
+        if (!this.ceciDefinition) {
           console.error('Ceci definition required for ' + this.localName);
           return;
         }
 
-        var attributeResults = processAttributes(this.ceci.editables, ceciDefinition.attributes || {});
+        var attributeResults = processAttributes(this.ceci.editables, this.ceciDefinition.attributes || {});
 
         Object.keys(attributeResults.attributeListeners).forEach(function (attributeName) {
           var listenerName = attributeResults.attributeListeners[attributeName];
@@ -141,35 +152,42 @@
           };
         });
 
-        Object.keys(ceciDefinition.listeners).forEach(function (listenerDefinitionName) {
-          attributeResults.listeners[listenerDefinitionName] = ceciDefinition.listeners[listenerDefinitionName];
+        Object.keys(this.ceciDefinition.listeners).forEach(function (listenerDefinitionName) {
+          attributeResults.listeners[listenerDefinitionName] = that.ceciDefinition.listeners[listenerDefinitionName];
         });
 
-        var defaultListeners = processListeners(this.ceci.listeners, attributeResults.listeners);
-        var defaultBroadcasts = processBroadcasts(this.ceci.broadcasts, ceciDefinition.broadcasts);
+        this._defaultListeners = processListeners(this.ceci.listeners, attributeResults.listeners);
+        this._defaultBroadcasts = processBroadcasts(this.ceci.broadcasts, this.ceciDefinition.broadcasts);
 
-        this.applyDefaults = function () {
-          defaultListeners.forEach(function (d) {
-            if (!that.querySelector('ceci-listen[for="' + d.name + '"]')) {
-              that.setListener(d.name, d.channel);
-            }
-          });
+        this.ceci.thumbnail = this.ceciDefinition.thumbnail;
+        this.ceci.tags = this.ceciDefinition.tags || [];
+        this.ceci.attributes = this.ceciDefinition.attributes || {};
+        this.ceci.name = this.gettext(this.localName) || this.ceciDefinition.name || this.localName;
+        this.localized();
+        this.fire('CeciElementReady');
+      },
+      applyDefaults: function () {
+        // This code should never be moved to "attached" or be applied automatically when
+        // the element is added to the page. It must be run explicitly by an external function,
+        // since it's hard to detect whether or not this element is really "new" (e.g. someone
+        // just added it to their app), or was created from a loaded app. In the latter case,
+        // defaults should not be applied. Only when an element is new do we want this function
+        // to run.
 
-          defaultBroadcasts.forEach(function (d) {
-            if (!that.querySelector('ceci-broadcast[from="' + d.name + '"]')) {
-              that.setBroadcast(d.name, d.channel);
-            }
-          });
-        };
+        var that = this;
+        var map = document.querySelector("ceci-channel-map");
 
-        this.ceci.thumbnail = ceciDefinition.thumbnail;
-        this.ceci.tags = ceciDefinition.tags || [];
+        this._defaultListeners.forEach(function (d) {
+          if (!that.querySelector('ceci-listen[for="' + d.name + '"]')) {
+            that.setListener(d.name, map.freeListenerChannel);
+          }
+        });
 
-        this.ceci.attributes = ceciDefinition.attributes || {};
-
-        this.ceci.name = this.gettext(this.localName) || ceciDefinition.name || this.localName;
-
-        that.localized();
+        this._defaultBroadcasts.forEach(function (d) {
+          if (!that.querySelector('ceci-broadcast[from="' + d.name + '"]')) {
+            that.setBroadcast(d.name, map.freeBroadcastChannel);
+          }
+        });
       },
       broadcast: function (name, data) {
         var broadcastElement = this.querySelector('ceci-broadcast[from="' + name + '"]');
@@ -201,6 +219,7 @@
 
           listener.setAttribute('on', channel);
           listener.setAttribute('for', name);
+          this.fire('CeciChannelUpdated', {detail: {name: name, channel: channel, type: 'listen'}});
         }
         else {
           console.error('No listener definition found for "' + name + '".');
@@ -208,16 +227,15 @@
       },
       setBroadcast: function (name, channel) {
         var entry = this.ceci.broadcasts[name];
-
         if (entry) {
           var broadcast = this.querySelector('ceci-broadcast[from="' + name + '"]');
           if (!broadcast) {
             broadcast = document.createElement('ceci-broadcast');
             this.appendChild(broadcast);
           }
-
           broadcast.setAttribute('on', channel);
           broadcast.setAttribute('from', name);
+          this.fire('CeciChannelUpdated', {detail: {name: name, channel: channel, type: 'broadcast'}});
         }
         else {
           console.error('No broadcast definition found for "' + name + '".');
@@ -227,13 +245,38 @@
         var listen = this.querySelector('ceci-listen[for="' + name + '"]');
         if (listen) {
           this.removeChild(listen);
+          this.fire('CeciChannelUpdated', {detail: {name: name, channel: null, type: 'listen'}});
         }
       },
       removeBroadcast: function (name) {
         var broadcast = this.querySelector('ceci-broadcast[from="' + name + '"]');
         if (broadcast) {
           this.removeChild(broadcast);
+          this.fire('CeciChannelUpdated', {detail: {name: name, channel: null, type: 'broadcast'}});
         }
+      },
+      attached: function () {
+        var els = this.shadowRoot.querySelectorAll(customListenerQuerySelector);
+        this.touchEnabled = "ontouchstart";
+        Array.prototype.forEach.call(els, this.addCustomListener.bind(this));
+        document.dispatchEvent(new CustomEvent('CeciElementAdded', {bubbles: true, detail: this}));
+      },
+      addCustomListener: function(el, listener){
+        // Loop over the on-ceci-* listener types to see which one applies to this element
+        Object.keys(customListenerMap).forEach(function (listener) {
+          if (!el.hasAttribute(listener)) return;
+
+          // If there is a valid map entry, grab it
+          var mapEntry = customListenerMap[listener];
+
+          if (mapEntry) {
+            // Fire an event directly at the element with the on-ceci-* attribute
+            el.addEventListener(mapEntry[this.touchEnabled ? 'mobile' : 'desktop'], function(e){
+              // Emit an event without the "on-" prefix, to let Polymer's template syntax sugar do the rest
+              el.dispatchEvent(new CustomEvent(listener.substr(3), {bubbles: true, detail: this}));
+            });
+          }
+        });
       },
       domReady: function () {
         document.dispatchEvent(new CustomEvent('CeciElementAdded', {bubbles: true, detail: this}));

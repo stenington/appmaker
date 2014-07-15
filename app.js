@@ -49,6 +49,7 @@ var MAX_FONT_AGE_MS = 1000 * 60 * 60 * 24 * 180;
 
 var webmakerAuth = new WebmakerAuth({
   loginURL: process.env.LOGINAPI,
+  authLoginURL: process.env.LOGINAPI_WITH_AUTH,
   secretKey: process.env.COOKIE_SECRET,
   forceSSL: process.env.FORCE_SSL,
   domain: process.env.COOKIE_DOMAIN
@@ -181,16 +182,7 @@ app.post('/logout', webmakerAuth.handlers.logout);
 app.post('/check-username', webmakerAuth.handlers.exists);
 
 app.get('/', routes.index);
-
-app.get('/about', routes.about);
-
-app.get('/contribute', routes.contribute);
-
 app.all('/designer', routes.designer);
-
-app.get('/testappdesigner', routes.testappdesigner);
-
-app.get('/testapp', routes.testapp);
 
 // remix and publish email notification routes
 app.get('/remix', routes.remix);

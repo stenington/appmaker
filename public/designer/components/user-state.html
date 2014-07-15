@@ -1,52 +1,61 @@
-<polymer-element name="user-state" attributes="user editingmode">
+<polymer-element name="user-state" attributes="user editingmode customcomponents">
   <template>
     <link rel="stylesheet" href="/stylesheets/user-state.css">
+    <link rel="stylesheet" href="/vendor/font-awesome/css/font-awesome.css">
+
+    <div class="dropdowns {{ {hidden: user.state == 'signedout'} | tokenList }}">
+
+      <div class="menu-wrapper user-menu button">
+        <div id="email" class="menu-button user-menu-button {{ {hidden: user.state == 'signedout'} | tokenList}}" on-mousedown="{{toggleMenu}}"><span class="icon"></span>{{user.email}}</div>
+        <div class="menu">
+          <h3 id="myappsheading">{{'My apps' | l10n}}</h3>
+          <span id="noApps">{{"You don't have any saved apps!" | l10n}}</span>
+          <ul id="myapps" class="menu-options">
+          </ul>
+          <template if="{{ customcomponents }}">
+            <h3 id="mycomponentsheading">{{'My components' | l10n}}</h3>
+            <div>
+              <a id="addComponent" class="button" on-click={{addComponent}}>{{'Add Component' | l10n}}</a>
+            </div>
+            <ul id="mycomponents" class="menu-options">
+            </ul>
+          </template>
+          <a id="signout" class="button" on-click="{{signoutClick}}">{{'Sign Out' | l10n}}</a>
+        </div>
+      </div>
+      <div class="menu-wrapper app-menu button">
+        <div class="menu-button {{ {hidden: user.state == 'signedout'} | tokenList}}" on-mousedown="{{toggleMenu}}">
+          <div class="icon-reorder"></div>
+        </div>
+        <div class="menu app-actions menu-options">
+          <a id="saveAppAs"><span class="icon icon-save"> </span> {{'Save As' | l10n}}</a>
+          <a class="saved" id="saveApp"><span class="icon icon-save"> </span> {{'Save' | l10n}}</a>
+          <a class="saved" id="renameApp"><span class="icon icon-edit"> </span> {{'Rename' | l10n}}</a>
+          <a id="publishApp"><span class="icon icon-mobile-phone"> </span> {{'Publish' | l10n}}</a>
+          <a class="saved" id="deleteApp"><span class="icon icon-trash"> </span> {{'Delete' | l10n}}</a>
+          <a class="hidden" id="viewlink"><span class="icon icon-external-link"> </span> {{'Preview App' | l10n}}</a>
+        </div>
+      </div>
+
+    </div>
+
+    <a id="newApp" class="button">{{'New App' | l10n}}</a>
+<!--
+    commented off for https://github.com/mozilla-appmaker/appmaker/issues/1618, with the intention of turning it back on after Maker Party
 
     <a id="collaborate" class="button" on-click="{{collaborateClick}}">
       {{ {'Collaborate': !user.collaborating} | tokenList}}
       {{ {'End Collaboration': !!user.collaborating} | tokenList}}
     </a>
-    <a id="signin" class="button {{ {hidden: user.state == 'signedin'} | tokenList}}" on-click="{{signinClick}}">Sign In</a>
-    <div id="signInProgress"></div>
 
-    <div class="dropdowns {{ {hidden: user.state == 'signedout'} | tokenList }}">
+-->
+    <a id="signin" class="button {{ {hidden: user.state == 'signedin'} | tokenList}}" on-click="{{signinClick}}">{{'Sign In' | l10n}}</a>
+    <div id="signInProgress" class="hidden"></div>
 
-      <div class="menu-wrapper user-menu">
-        <a id="email" class="menu-button button" on-mousedown="{{toggleMenu}}" class="button btn-std btn-md {{ {hidden: user.state == 'signedout'} | tokenList}}">
-          <span class="icon"></span>
-          {{user.email}}
-        </a>
-        <div class="menu">
-          <h3 id="myappsheading">My apps</h3>
-          <span id="noApps">You don't have any saved apps!</span>
-          <ul id="myapps" class="menu-options">
-          </ul>
-          <h3 id="mycomponentsheading">My components</h3>
-          <div>
-            <a id="addComponent" class="button" on-click={{addComponent}}>Add component</a>
-          </div>
-          <ul id="mycomponents" class="menu-options">
-          </ul>
-          <a id="signout" class="button" on-click="{{signoutClick}}">Sign Out</a>
-        </div>
-      </div>
-      <div class="menu-wrapper app-menu">
-        <a class="menu-button button" on-mousedown="{{toggleMenu}}" class="button btn-std btn-md {{ {hidden: user.state == 'signedout'} | tokenList}}">
-          <span class="icon"></span>
-          <span id="App">App</span>
-        </a>
-        <div class="menu app-actions menu-options">
-          <a id="saveAppAs">Save As</a>
-          <a class="saved" id="saveApp">Save</a>
-          <a class="saved" id="renameApp">Rename</a>
-          <a id="publishApp">Publish</a>
-          <a class="saved" id="deleteApp">Delete</a>
-          <a class="hidden" id="viewlink">App URL</a>
-        </div>
-      </div>
+    <div class="back-to-webmaker">
+      <a href="https://webmaker.org/en-US"><span class="webmaker-icon"></span>Webmaker.org</a>
     </div>
 
-    <a id="newApp" class="button">New App</a>
   </template>
   <script>
   (function() {
@@ -84,6 +93,9 @@
       });
 
       Polymer('user-state', {
+        l10n: function (str) {
+          return l10n.get(str);
+        },
         user: user,
         editingmodeChanged : function(oldValue, newValue){
           localStorage.editingmode = newValue;
@@ -100,19 +112,6 @@
           this.addEventListener("click", function(e) {
             e.stopPropagation();
           });
-
-          that.$.signin.innerHTML = l10n.get("Sign In");
-          that.$.myappsheading.innerHTML = l10n.get("My apps");
-          that.$.noApps.innerHTML = l10n.get("You don't have any saved apps!");
-          that.$.signout.innerHTML = l10n.get("Sign Out");
-          that.$.App.innerHTML = l10n.get("App");
-          that.$.saveAppAs.innerHTML = l10n.get("Save As");
-          that.$.saveApp.innerHTML = l10n.get("Save");
-          that.$.renameApp.innerHTML = l10n.get("Rename");
-          that.$.publishApp.innerHTML = l10n.get("Publish");
-          that.$.deleteApp.innerHTML = l10n.get("Delete");
-          that.$.viewlink.innerHTML = l10n.get("App URL");
-          that.$.newApp.innerHTML = l10n.get("New App");
 
           function loadRemixContent (remixName) {
             application.loadAppByUrl(decodeURIComponent(remixName));
@@ -241,6 +240,7 @@
             ceciApp.setAttribute("appid", "ceci-app-"+uuid());
 
             var html = ceciApp.outerHTML;
+
             if(name){
               application.saveApp(name,ceciApp.appid,html, function(err,data){
                 if(!err){
@@ -289,13 +289,21 @@
 
           //Publish!
           this.$.publishApp.addEventListener("click", function() {
-            var app = document.querySelector('ceci-app');
+            var app = document.querySelector('ceci-app').cloneNode(true);
+
+            app.querySelector("ceci-card[visible=true]").removeAttribute("visible");
+
+            // Need to use querySelector because first-child returns null (bug?)
+            app.querySelector("ceci-card").setAttribute("visible","true");
+
             var name = app.name;
             // This might need to be made its own thing so it can be called
             // in various places:
             while (!name || name === l10n.get("Unsaved App")) {
               name = prompt("Please name your app first:");
               if(name === null) break;
+              app.setAttribute("name", name);
+              app.setAttribute("appid", "ceci-app-"+uuid());
             }
             if(!name) {
               return reporter.errorReport("Save was cancelled.");
@@ -341,14 +349,14 @@
           }
         },
         signInStarted: function(){
-          this.$.signInProgress.style.display = "block";
+          this.$.signInProgress.classList.remove("hidden");
         },
         signInFinished: function(){
-          this.$.signInProgress.style.display = "none";
-          this.$.signin.style.display = "none";
+          this.$.signInProgress.classList.add("hidden");
+          this.$.signin.classList.add("hidden");
         },
         signedOut: function(){
-          this.$.signin.style.display = "block";
+          this.$.signin.classList.remove("hidden");
         },
         failedAppLoad: function(){
           application.clearCurrentApp();
@@ -379,7 +387,7 @@
           this.getOrWaitForCeciApp(function(ceciApp){
             if (ceciApp && name) {
               ceciApp.name = name;
-              document.querySelector(".phone-top .app-name").innerHTML = ceciApp.name;
+              document.querySelector(".phone-top .app-name").textContent = ceciApp.name;
             }
           });
         },
@@ -398,6 +406,13 @@
           auth.logout();
         },
         loadLink: function(name, url, callback) {
+          if (!this.customcomponents) {
+            callback({
+              error: 'Custom components are not available in this build'
+            });
+            return;
+          }
+
           var link = document.createElement('link');
           link.rel = "import";
           link.href = url;
@@ -428,6 +443,8 @@
           return;
         },
         addComponentByURL: function (url) {
+          if (!this.customcomponents) { return; }
+
           var self = this;
 
           try {
@@ -488,6 +505,8 @@
           }
         },
         addComponent: function() {
+          if (!this.customcomponents) { return; }
+
           var self = this;
           // in a try/except block because called from an onclick handler,
           // so want to catch exceptions.
@@ -532,6 +551,8 @@
           return componentElement.getAttribute('name');
         },
         learnComponent: function(url, name) {
+          if (!this.customcomponents) { return; }
+
           // This function is to teach appmaker (client & server) about a new component URL
           var self = this;
           if (tray.isKnownComponent(name)) {
@@ -548,6 +569,8 @@
           });
         },
         storeComponentURL: function(url, name, next) {
+          if (!this.customcomponents) { return; }
+
           var self = this;
           $.ajax('/api/componentlinks', {
             data: {
@@ -566,6 +589,11 @@
           });
         },
         addComponentToUI: function(url, name, cb) {
+          if (!this.customcomponents) {
+            cb('Custom components are not available in this build');
+            return;
+          }
+
           var self = this;
           // Add to the menu
           var menuItem = this.addMenuItemForComponent(url, name);
@@ -582,6 +610,8 @@
           });
         },
         addMenuItemForComponent: function(url, name) {
+          if (!this.customcomponents) { return; }
+
           var self = this;
 
           var component = document.createElement('li');
@@ -690,9 +720,9 @@
               });
 
               if(count == 0){
-                noApps.style.display = "block";
+                noApps.classList.remove("hidden");
               } else {
-                noApps.style.display = "none";
+                noApps.classList.add("hidden");
               }
             } catch (e) {
               reporter.errorReport(e);
@@ -719,6 +749,8 @@
           });
         },
         refreshComponentsList: function() {
+          if(!this.customcomponents) { return; }
+
           var self = this;
           var myComponents = this.shadowRoot.querySelector("#mycomponents");
           myComponents.innerHTML = "";

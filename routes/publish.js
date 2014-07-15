@@ -20,6 +20,23 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
     install: null
   };
 
+  var icons = {};
+
+  [60, 79, 128].forEach(function (iconSize) {
+    var iconFilename = __dirname + '/../public/images/app-icon-' + iconSize + '.png';
+    fs.readFile(iconFilename, function (err, iconData) {
+      if (err) {
+        console.error('Could not load icon at ' + iconFilename + ' .');
+      }
+      else {
+        icons[iconSize] = {
+          filename: 'app-icon-' + iconSize + '.png',
+          data: iconData
+        }
+      }
+    });
+  });
+
   fs.readFile(viewsPath + '/publish.ejs', 'utf8', function (err, publishHTMLData) {
     templates.publish = ejs.compile(publishHTMLData, {
       // for partial include access
@@ -35,6 +52,11 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
   });
 
   function getUserComponents (req, callback) {
+    if (!process.env.ALLOW_CUSTOM_COMPONENTS) {
+      callback([]);
+      return;
+    }
+
     if (! req.session.email) {
       console.error('Need to be signed in to retrieve components.');
       callback([]);
@@ -102,7 +124,8 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
             remixURL: remixUrl,
             bundles: app.locals.bundles,
             components: coreComponents.concat(appComponents),
-            userComponents: userComponents
+            userComponents: userComponents,
+            manifestUrl: remoteURLs.manifest
           });
 
           var installStr = templates.install({
@@ -124,8 +147,6 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
               "url": "https://appmaker.mozillalabs.com/"
             },
             "icons": {
-              "60": "/style/icons/icon-60.png",
-              "79": "/style/icons/icon-79.png"
             },
             "default_locale": "en",
             "permissions": {
@@ -138,6 +159,13 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
             }
           };
 
+          var iconFiles = Object.keys(icons).map(function (iconSize) {
+            var icon = icons[iconSize];
+            manifestJSON.icons[iconSize] = urlManager.createIconPath(folderName, icon.filename);
+            return {filename: urlManager.objectPrefix + '/' + folderName + '/' + icons[iconSize].filename,
+              data: icons[iconSize].data, contentType: 'image/png'};
+          });
+
           var outputFiles = [
             {filename: urlManager.objectPrefix + '/' + folderName + '/' + manifestFilename,
               data: JSON.stringify(manifestJSON),
@@ -147,7 +175,7 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
               data: appStr},
             {filename: urlManager.objectPrefix + '/' + folderName + '/' + installHTMLFilename,
               data: installStr}
-          ];
+          ].concat(iconFiles);
 
           var filesDone = 0;
 
@@ -183,7 +211,7 @@ module.exports = function (store, viewsPath, urlManager, makeAPIPublisher, dbcon
                 makeAPIPublisher.publish({
                   url: remoteURLs.install,
                   remix: remixUrl,
-                  thumbnail: 'http://appmaker.mozillalabs.com/images/mail-man.png',
+                  thumbnail: process.env.ASSET_HOST + "/images/app-icon.png",
                   title: appName,
                   appDescription: appDescription,
                   appTags: inputData.appTags || "",

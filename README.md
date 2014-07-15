@@ -79,7 +79,8 @@ A short explanation of a complete `.env` file:
 
 ```
 MONGO_URL: REQUIRED - the URI for your mongod instance and database, for example mongodb://localhost/appmakerdev (or whatever your database is named)
-LOGINAPI: REQUIRED - The URI of a Webmaker login server to use for user authentication. for exmaple http://testuser:password@localhost:3000
+LOGINAPI: REQUIRED - The URI of a Webmaker login server to use for user authentication. for exmaple http://localhost:3000
+LOGINAPI_WITH_AUTH: - The URI of a Webmaker login server, including basic authentication credentials. for exmaple http://testuser:password@localhost:3000
 COOKIE_SECRET: A long, complex string for cookie encryption (NOTE: You define this for your local use, the string can be anything).
 FORCE_SSL: If using SSL, set this to true.
 STORE: Storage approach for publishing apps. `local` is the default, `s3` requires additional environment variables (prefixed by S3_)
@@ -92,6 +93,7 @@ REDIRECT_URL: The hostname and port that we want to redirect to for Appmaker
 PORT: The port that the web process listens on for incomming connections
 GITHUB_TOKEN: A personal Github token used for loading lists of components from the mozilla-appmaker org during development (https://github.com/blog/1509-personal-api-tokens)
 EXCLUDED_COMPONENTS: A comma-delimited list of component repositories to exclude from the mozilla-appmaker org. The name is the repo name rather than the component name, though this is usually the same.
+ALLOW_CUSTOM_COMPONENTS: Optional flag to turn on using custom component for testing purposes (any value that coerces to true is accepted)
 BUNDLE: Any non-null value will cause the application to bundle as many resources as possible
 LOAD_FROM_GITHUB: if omitted, or "false", instructs appmaker to load components from repositories hosted on github.com
 HSTS_DISABLED: if set to "true", [HSTS](http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security) is disabled.  **(If you are not forcing SSL, you should turn disable HSTS by setting HSTS_DISABLED='true' in the .env)**
@@ -100,8 +102,6 @@ IEXSS_PROTECTION_DISABLED: If set to "true", iexss vulnerability headers are not
 GA_ACCOUNT: Optional google analytics account setting. (https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setAccount)
 GA_DESIGNER_DOMAIN: Optional google analytics domain setting for the designer. (https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiDomainDirectory#_gat.GA_Tracker_._setDomainName)
 GA_PUBLISH_DOMAIN: Optional google analytics domain setting for the published apps. (https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiDomainDirectory#_gat.GA_Tracker_._setDomainName)
-
-
 ```
 
 ### Install and Run MongoDB
@@ -144,6 +144,10 @@ sudo gem install foreman
 
 NOTE: foreman's configuration file is Procfile in the root of the appmaker directory
 Foreman explanation: http://blog.daviddollar.org/2011/05/06/introducing-foreman.html
+
+NOTE FOR WINDOWS USERS: newer versions of Foreman may not work, and it is recommended
+to install v0.61.0, which is known to work. To install this specific version, use
+`gem install foreman -v0.61.0`
 
 ## How you can help
 

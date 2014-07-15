@@ -6,7 +6,7 @@
   background: #31353C;
   background-color: #31353C;
   position: absolute;
-  transition: opacity .6s ease-in .4s;
+  transition: opacity .4s ease-in .2s;
   top: 0;
   opacity: 1;
 }
@@ -21,7 +21,7 @@
   right: 40px;
   height: 100%;
   position: absolute;
-  background: url('/images/appmaker-logo-header.png') no-repeat;
+  background: url('/images/appmaker-logo-white.png') no-repeat;
   background-size: 98%;
   background-position: 0 35%;
 }
@@ -34,13 +34,13 @@
   border-radius: 4px;
   top: 50%;
   background: linear-gradient( 90deg, #3fb58e, #ffcd36, #27aae1 );
+  overflow: hidden;
 }
 
 .loading-cover {
   background-color: #31353C;
   height: 100%;
   width: 100%;
-  border-radius: 4px;
   right: 0;
   position: absolute;
   transition: width .2s linear;
