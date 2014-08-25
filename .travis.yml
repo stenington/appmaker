@@ -10,3 +10,4 @@ deploy:
   on:
     repo: mozilla-appmaker/appmaker
     branch: develop
+
