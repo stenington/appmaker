@@ -10,6 +10,16 @@ module.exports = function( grunt ) {
       },
       all: { src: 'test/*.js' }
     },
+    karma: {
+      continuous: {
+        options: {
+          files: ['test/browser/**/*.js'],
+          frameworks: ['mocha', 'chai'],
+          browsers: ['Firefox'],
+          singleRun: true
+        }
+      }
+    },
     csslint: {
       lax: {
         options: {
@@ -92,6 +102,7 @@ module.exports = function( grunt ) {
   grunt.loadNpmTasks("grunt-simple-mocha");
   grunt.loadNpmTasks("grunt-contrib-requirejs");
   grunt.loadNpmTasks('grunt-gettext-finder');
+  grunt.loadNpmTasks('grunt-karma');
 
   grunt.registerTask("require-designer", function () {
     grunt.config('requirejs.compile', {
@@ -159,6 +170,7 @@ module.exports = function( grunt ) {
     "jshint",
     "inlinelint",
     "simplemocha",
+    "karma",
     "require-designer",
     "requirejs",
     "require-ceci",
